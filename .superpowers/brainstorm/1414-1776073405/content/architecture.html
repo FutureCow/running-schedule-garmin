@@ -1,0 +1,90 @@
+<h2>Architectuur — Hardloopschema App</h2>
+<p class="subtitle">Next.js · Supabase · Vercel · Claude API · Garmin Connect</p>
+
+<div style="display: flex; flex-direction: column; gap: 16px; margin-top: 24px;">
+
+  <!-- Browser layer -->
+  <div style="background: #1e3a5f; border-radius: 10px; padding: 16px 20px;">
+    <div class="label" style="color: #7eb8f7; margin-bottom: 10px;">Gebruiker (Browser / Mobiel)</div>
+    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+      <div style="background: #2a4a70; border-radius: 8px; padding: 10px 16px; flex: 1; min-width: 120px; text-align: center;">
+        <div style="font-size: 13px; color: #cde; font-weight: 600;">Onboarding</div>
+        <div style="font-size: 11px; color: #89a; margin-top: 4px;">Vragen wizard</div>
+      </div>
+      <div style="background: #2a4a70; border-radius: 8px; padding: 10px 16px; flex: 1; min-width: 120px; text-align: center;">
+        <div style="font-size: 13px; color: #cde; font-weight: 600;">Dashboard</div>
+        <div style="font-size: 11px; color: #89a; margin-top: 4px;">Schema + voortgang</div>
+      </div>
+      <div style="background: #2a4a70; border-radius: 8px; padding: 10px 16px; flex: 1; min-width: 120px; text-align: center;">
+        <div style="font-size: 13px; color: #cde; font-weight: 600;">Week view</div>
+        <div style="font-size: 11px; color: #89a; margin-top: 4px;">Per week trainingen</div>
+      </div>
+      <div style="background: #2a4a70; border-radius: 8px; padding: 10px 16px; flex: 1; min-width: 120px; text-align: center;">
+        <div style="font-size: 13px; color: #cde; font-weight: 600;">Garmin koppeling</div>
+        <div style="font-size: 11px; color: #89a; margin-top: 4px;">Login + sync</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Arrow down -->
+  <div style="text-align: center; color: #556; font-size: 20px;">↕</div>
+
+  <!-- Next.js layer -->
+  <div style="background: #1a3a2a; border-radius: 10px; padding: 16px 20px;">
+    <div class="label" style="color: #7ef7a0; margin-bottom: 10px;">Next.js App (Vercel) — Frontend + API Routes</div>
+    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+      <div style="background: #234a30; border-radius: 8px; padding: 10px 16px; flex: 1; min-width: 130px; text-align: center;">
+        <div style="font-size: 13px; color: #ade; font-weight: 600;">React Pages</div>
+        <div style="font-size: 11px; color: #789; margin-top: 4px;">UI componenten</div>
+      </div>
+      <div style="background: #234a30; border-radius: 8px; padding: 10px 16px; flex: 1; min-width: 130px; text-align: center;">
+        <div style="font-size: 13px; color: #ade; font-weight: 600;">/api/generate</div>
+        <div style="font-size: 11px; color: #789; margin-top: 4px;">Claude API aanroep</div>
+      </div>
+      <div style="background: #234a30; border-radius: 8px; padding: 10px 16px; flex: 1; min-width: 130px; text-align: center;">
+        <div style="font-size: 13px; color: #ade; font-weight: 600;">/api/garmin</div>
+        <div style="font-size: 11px; color: #789; margin-top: 4px;">Sync + export</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Arrow down -->
+  <div style="text-align: center; color: #556; font-size: 20px;">↕</div>
+
+  <!-- External services -->
+  <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+
+    <div style="background: #3a1a1a; border-radius: 10px; padding: 16px 20px; flex: 1; min-width: 180px;">
+      <div class="label" style="color: #f77; margin-bottom: 10px;">Supabase</div>
+      <div style="font-size: 12px; color: #baa; line-height: 1.6;">
+        ✦ PostgreSQL database<br>
+        ✦ Auth (email / Google)<br>
+        ✦ Gebruikersprofielen<br>
+        ✦ Opgeslagen schema's<br>
+        ✦ Garmin tokens (encrypted)
+      </div>
+    </div>
+
+    <div style="background: #2a1a3a; border-radius: 10px; padding: 16px 20px; flex: 1; min-width: 180px;">
+      <div class="label" style="color: #bf7fff; margin-bottom: 10px;">Claude API (Anthropic)</div>
+      <div style="font-size: 12px; color: #bab; line-height: 1.6;">
+        ✦ Analyseert gebruikersprofiel<br>
+        ✦ Analyseert Garmin-data<br>
+        ✦ Genereert weekschema's<br>
+        ✦ Geeft uitleg per training
+      </div>
+    </div>
+
+    <div style="background: #1a2a3a; border-radius: 10px; padding: 16px 20px; flex: 1; min-width: 180px;">
+      <div class="label" style="color: #7ec8f7; margin-bottom: 10px;">Garmin Connect</div>
+      <div style="font-size: 12px; color: #aab; line-height: 1.6;">
+        ✦ Ophalen activiteiten<br>
+        ✦ Analyseren loopdata<br>
+        ✦ Export workouts (.fit)<br>
+        ✦ Informele API (garmin-connect)
+      </div>
+    </div>
+
+  </div>
+
+</div>
