@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { auth } from '@/lib/auth'
+import sql from '@/lib/db'
 import { createCipheriv, randomBytes } from 'crypto'
 
 const ALGORITHM = 'aes-256-cbc'
@@ -13,13 +14,11 @@ function encrypt(text: string): string {
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
+  const session = await auth()
+  if (!session?.user) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
 
   const { username, password } = await request.json()
 
-  // Valideer bij Garmin
   const garminRes = await fetch(`${process.env.GARMIN_SERVICE_URL}/auth`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -31,13 +30,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: result.message }, { status: 400 })
   }
 
-  // Sla versleuteld op in Supabase
-  await supabase.from('garmin_connections').upsert({
-    user_id: user.id,
-    username_encrypted: encrypt(username),
-    password_encrypted: encrypt(password),
-    laatste_sync: new Date().toISOString(),
-  })
+  await sql`
+    INSERT INTO garmin_connections (user_id, username_encrypted, password_encrypted, laatste_sync)
+    VALUES (${session.user.id}, ${encrypt(username)}, ${encrypt(password)}, now())
+    ON CONFLICT (user_id) DO UPDATE SET
+      username_encrypted = EXCLUDED.username_encrypted,
+      password_encrypted = EXCLUDED.password_encrypted,
+      laatste_sync = now()
+  `
 
   return NextResponse.json({ success: true })
 }

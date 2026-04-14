@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { auth } from '@/lib/auth'
+import sql from '@/lib/db'
 import { createDecipheriv } from 'crypto'
 
 const ALGORITHM = 'aes-256-cbc'
@@ -14,22 +15,21 @@ function decrypt(encryptedText: string): string {
 }
 
 export async function GET() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
+  const session = await auth()
+  if (!session?.user) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
 
-  const { data: garminConn } = await supabase
-    .from('garmin_connections')
-    .select('username_encrypted, password_encrypted')
-    .eq('user_id', user.id)
-    .single()
+  const rows = await sql`
+    SELECT username_encrypted, password_encrypted
+    FROM garmin_connections
+    WHERE user_id = ${session.user.id}
+  `
 
-  if (!garminConn) {
+  if (rows.length === 0) {
     return NextResponse.json({ error: 'Geen Garmin account gekoppeld' }, { status: 404 })
   }
 
-  const username = decrypt(garminConn.username_encrypted)
-  const password = decrypt(garminConn.password_encrypted)
+  const username = decrypt(rows[0].username_encrypted)
+  const password = decrypt(rows[0].password_encrypted)
 
   const garminRes = await fetch(`${process.env.GARMIN_SERVICE_URL}/activities`, {
     method: 'POST',
@@ -41,12 +41,10 @@ export async function GET() {
     return NextResponse.json({ error: 'Garmin sync mislukt' }, { status: 500 })
   }
 
-  const data = await garminRes.json()
+  await sql`
+    UPDATE garmin_connections SET laatste_sync = now()
+    WHERE user_id = ${session.user.id}
+  `
 
-  await supabase
-    .from('garmin_connections')
-    .update({ laatste_sync: new Date().toISOString() })
-    .eq('user_id', user.id)
-
-  return NextResponse.json(data)
+  return NextResponse.json(await garminRes.json())
 }
