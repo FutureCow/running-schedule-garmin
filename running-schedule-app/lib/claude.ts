@@ -78,7 +78,8 @@ Geef ALLEEN geldige JSON terug, geen tekst of markdown:
     messages: [{ role: 'user', content: prompt }],
   })
 
-  const text = message.content[0].type === 'text' ? message.content[0].text : ''
+  const raw = message.content[0].type === 'text' ? message.content[0].text : ''
+  const text = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim()
   const schedule: Schedule = JSON.parse(text)
   return schedule
 }
