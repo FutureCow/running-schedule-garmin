@@ -1,10 +1,24 @@
-from garminconnect import Garmin
+import hashlib
+import os
 from datetime import datetime, timedelta
 from typing import List
+
+from garminconnect import Garmin
 from models import ActivitySummary, ActivitiesResponse
 import logging
 
 logger = logging.getLogger(__name__)
+
+TOKEN_BASE_DIR = os.path.expanduser("~/.garminconnect")
+
+
+def get_token_dir(username: str) -> str:
+    """Geeft een unieke token-directory per Garmin-account."""
+    user_hash = hashlib.sha256(username.lower().encode()).hexdigest()[:16]
+    token_dir = os.path.join(TOKEN_BASE_DIR, user_hash)
+    os.makedirs(token_dir, exist_ok=True)
+    return token_dir
+
 
 def parse_pace(seconds_per_meter: float) -> str:
     """Zet seconden/meter om naar min:sec/km string."""
@@ -15,10 +29,11 @@ def parse_pace(seconds_per_meter: float) -> str:
     seconds = int(sec_per_km % 60)
     return f"{minutes}:{seconds:02d}"
 
+
 def get_activities(username: str, password: str) -> ActivitiesResponse:
     """Haal hardloopactiviteiten op van afgelopen 3 maanden."""
     client = Garmin(username, password)
-    client.login()
+    client.login(get_token_dir(username))
 
     end_date = datetime.now()
     start_date = end_date - timedelta(days=90)
