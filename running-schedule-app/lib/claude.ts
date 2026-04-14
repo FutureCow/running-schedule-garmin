@@ -73,10 +73,14 @@ Geef ALLEEN geldige JSON terug, geen tekst of markdown:
 
   const message = await client.messages.create({
     model: 'claude-sonnet-4-6',
-    max_tokens: 8000,
+    max_tokens: 16000,
     system: 'Je bent een professionele hardloopcoach. Geef altijd alleen geldige JSON terug zonder markdown of uitleg.',
     messages: [{ role: 'user', content: prompt }],
   })
+
+  if (message.stop_reason === 'max_tokens') {
+    throw new Error('Schema te lang — verhoog max_tokens of kies een kortere periode')
+  }
 
   const raw = message.content[0].type === 'text' ? message.content[0].text : ''
   const text = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim()
