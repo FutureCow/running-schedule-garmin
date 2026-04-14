@@ -3,16 +3,15 @@
 name="garmin-service"
 description="Garmin Connect FastAPI microservice"
 
-# Pas deze paden aan als je de repo ergens anders hebt gezet
+# Pas dit pad aan als je de repo ergens anders hebt staan
 REPO_DIR="/opt/running-schedule-garmin"
 APP_DIR="${REPO_DIR}/garmin-service"
 VENV_DIR="${APP_DIR}/venv"
 
-command="${VENV_DIR}/bin/uvicorn"
-command_args="main:app --host 0.0.0.0 --port 8000"
+command="/bin/sh"
+command_args="-c 'cd ${APP_DIR} && exec ${VENV_DIR}/bin/uvicorn main:app --host 0.0.0.0 --port 8000'"
 command_user="garmin"
 command_background=true
-command_cwd="${APP_DIR}"
 
 pidfile="/run/${RC_SVCNAME}.pid"
 output_log="/var/log/${RC_SVCNAME}/output.log"
@@ -25,5 +24,5 @@ depend() {
 
 start_pre() {
     mkdir -p "/var/log/${RC_SVCNAME}"
-    checkpath --directory --owner "${command_user}" "/var/log/${RC_SVCNAME}"
+    chown "${command_user}" "/var/log/${RC_SVCNAME}"
 }
