@@ -55,49 +55,65 @@ export function GarminPanel({ weekWorkouts, initialConnected }: Props) {
     setUploading(false)
   }
 
+  const isError = message.includes('mislukt') || message.includes('fout')
+
   return (
-    <div className="border rounded-xl p-4 mt-4">
-      <h3 className="font-semibold mb-3">Garmin Connect</h3>
+    <div className="bg-white rounded-2xl border border-slate-200 p-5 mt-4">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-9 h-9 bg-slate-100 rounded-xl flex items-center justify-center text-lg">⌚</div>
+        <div>
+          <h3 className="font-semibold text-slate-800 text-sm">Garmin Connect</h3>
+          <p className="text-xs text-slate-400">
+            {isConnected ? 'Verbonden' : 'Niet gekoppeld'}
+          </p>
+        </div>
+        {isConnected && (
+          <div className="ml-auto flex items-center gap-1.5">
+            <div className="w-2 h-2 bg-emerald-500 rounded-full" />
+            <span className="text-xs text-emerald-600 font-medium">Actief</span>
+          </div>
+        )}
+      </div>
 
       {message && (
-        <p className={`text-sm mb-3 ${message.includes('mislukt') ? 'text-red-600' : 'text-green-600'}`}>
-          {message}
-        </p>
+        <div className={`rounded-xl px-4 py-3 mb-4 ${isError ? 'bg-red-50 border border-red-200' : 'bg-emerald-50 border border-emerald-200'}`}>
+          <p className={`text-sm ${isError ? 'text-red-600' : 'text-emerald-700'}`}>{message}</p>
+        </div>
       )}
 
       {showConnect ? (
         <div className="space-y-3">
           <input
             type="text"
-            placeholder="Garmin gebruikersnaam"
+            placeholder="Garmin gebruikersnaam of e-mail"
             value={username}
             onChange={e => setUsername(e.target.value)}
-            className="w-full border rounded-lg px-3 py-2 text-sm"
+            className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-100 focus:border-orange-400 bg-slate-50"
           />
           <input
             type="password"
-            placeholder="Garmin wachtwoord"
+            placeholder="Wachtwoord"
             value={password}
             onChange={e => setPassword(e.target.value)}
-            className="w-full border rounded-lg px-3 py-2 text-sm"
+            className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-100 focus:border-orange-400 bg-slate-50"
           />
           <div className="flex gap-2">
             <button
               onClick={connectGarmin}
               disabled={connecting || !username || !password}
-              className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm disabled:opacity-50"
+              className="flex-1 bg-orange-500 text-white py-3 rounded-xl text-sm font-semibold disabled:opacity-50 hover:bg-orange-600 transition-colors"
             >
               {connecting ? 'Koppelen...' : 'Koppelen'}
             </button>
             <button
               onClick={() => setShowConnect(false)}
-              className="px-4 py-2 border rounded-lg text-sm"
+              className="px-4 py-3 border border-slate-200 rounded-xl text-sm font-medium hover:bg-slate-50 transition-colors"
             >
               Annuleren
             </button>
           </div>
-          <p className="text-xs text-gray-500">
-            Je gegevens worden versleuteld opgeslagen en nooit gedeeld.
+          <p className="text-xs text-slate-400">
+            🔒 Je gegevens worden versleuteld opgeslagen en nooit gedeeld.
           </p>
         </div>
       ) : (
@@ -105,7 +121,7 @@ export function GarminPanel({ weekWorkouts, initialConnected }: Props) {
           {!isConnected && (
             <button
               onClick={() => setShowConnect(true)}
-              className="text-sm bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-lg"
+              className="text-sm border-2 border-slate-200 bg-white text-slate-700 px-4 py-2.5 rounded-xl font-semibold hover:border-slate-300 hover:bg-slate-50 transition-all"
             >
               Garmin koppelen
             </button>
@@ -113,9 +129,9 @@ export function GarminPanel({ weekWorkouts, initialConnected }: Props) {
           <button
             onClick={uploadWeek}
             disabled={uploading}
-            className="text-sm bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            className="text-sm bg-orange-500 text-white px-4 py-2.5 rounded-xl font-semibold hover:bg-orange-600 disabled:opacity-50 transition-colors"
           >
-            {uploading ? 'Uploaden...' : 'Week naar Garmin sturen'}
+            {uploading ? 'Uploaden...' : '⌚ Week naar Garmin sturen'}
           </button>
         </div>
       )}

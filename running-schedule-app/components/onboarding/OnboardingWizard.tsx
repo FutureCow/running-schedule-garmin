@@ -72,10 +72,12 @@ export function OnboardingWizard({ userId }: { userId: string }) {
   const canProceed = isStepValid(step, profile)
 
   return (
-    <div className="min-h-screen flex flex-col max-w-lg mx-auto px-4 py-8">
-      <ProgressBar current={step} total={TOTAL_STEPS} />
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      <div className="max-w-lg mx-auto w-full px-4 pt-8 pb-4">
+        <ProgressBar current={step} total={TOTAL_STEPS} />
+      </div>
 
-      <div className="flex-1 mt-8">
+      <div className="flex-1 max-w-lg mx-auto w-full px-4 py-2">
         {step === 1 && <Step1Goal data={profile} onChange={updateProfile} />}
         {step === 2 && <Step2Tempo data={profile} onChange={updateProfile} />}
         {step === 3 && <Step3Profile data={profile} onChange={updateProfile} />}
@@ -85,34 +87,40 @@ export function OnboardingWizard({ userId }: { userId: string }) {
         {step === 7 && <Step7Timeline data={profile} onChange={updateProfile} />}
       </div>
 
-      {error && <p className="text-red-600 text-sm my-2">{error}</p>}
+      <div className="max-w-lg mx-auto w-full px-4 pb-8 pt-4">
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-4">
+            <p className="text-red-600 text-sm">{error}</p>
+          </div>
+        )}
 
-      <div className="flex gap-3 mt-8">
-        {step > 1 && (
-          <button
-            onClick={() => setStep(s => s - 1)}
-            className="flex-1 border border-gray-300 py-3 rounded-lg font-medium hover:bg-gray-50"
-          >
-            Vorige
-          </button>
-        )}
-        {step < TOTAL_STEPS ? (
-          <button
-            onClick={() => setStep(s => s + 1)}
-            disabled={!canProceed}
-            className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-40"
-          >
-            Volgende
-          </button>
-        ) : (
-          <button
-            onClick={handleFinish}
-            disabled={!canProceed || saving}
-            className="flex-1 bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 disabled:opacity-40"
-          >
-            {saving ? 'Schema genereren...' : 'Schema genereren'}
-          </button>
-        )}
+        <div className="flex gap-3">
+          {step > 1 && (
+            <button
+              onClick={() => setStep(s => s - 1)}
+              className="flex-1 border-2 border-slate-200 bg-white text-slate-700 py-3.5 rounded-2xl font-semibold hover:border-slate-300 hover:bg-slate-50 transition-all"
+            >
+              Vorige
+            </button>
+          )}
+          {step < TOTAL_STEPS ? (
+            <button
+              onClick={() => setStep(s => s + 1)}
+              disabled={!canProceed}
+              className="flex-1 bg-orange-500 text-white py-3.5 rounded-2xl font-semibold hover:bg-orange-600 disabled:opacity-40 transition-all shadow-sm"
+            >
+              Volgende
+            </button>
+          ) : (
+            <button
+              onClick={handleFinish}
+              disabled={!canProceed || saving}
+              className="flex-1 bg-orange-500 text-white py-3.5 rounded-2xl font-semibold hover:bg-orange-600 disabled:opacity-40 transition-all shadow-sm"
+            >
+              {saving ? 'Schema genereren...' : '🏃 Schema genereren'}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   )
