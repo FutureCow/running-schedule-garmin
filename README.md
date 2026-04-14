@@ -224,21 +224,141 @@ npm run dev
 
 ## Omgevingsvariabelen
 
-### `running-schedule-app/.env.local`
+Kopieer eerst het voorbeeld bestand:
 
-| Variabele | Beschrijving | Waar te vinden |
-|-----------|-------------|----------------|
-| `NEXT_PUBLIC_SUPABASE_URL` | URL van je Supabase project | Supabase → Settings → API |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Publieke anon key | Supabase → Settings → API |
-| `SUPABASE_SERVICE_ROLE_KEY` | Server-side service role key | Supabase → Settings → API |
-| `ANTHROPIC_API_KEY` | Claude API sleutel | [console.anthropic.com](https://console.anthropic.com) |
-| `GARMIN_SERVICE_URL` | URL van de Python service | `http://localhost:8000` (lokaal) of Railway URL |
-| `GARMIN_ENCRYPTION_KEY` | 32-karakter willekeurige string voor AES-256 | Genereer met: `openssl rand -hex 16` |
-
-**Voorbeeld genereren van een encryptie sleutel:**
 ```bash
+cd running-schedule-app
+cp .env.local.example .env.local
+```
+
+Open `.env.local` in een teksteditor en vul de zes waarden in zoals hieronder beschreven.
+
+---
+
+### 1. `NEXT_PUBLIC_SUPABASE_URL`
+
+**Wat:** De URL van jouw Supabase project. Begint altijd met `https://` en eindigt op `.supabase.co`.
+
+**Hoe verkrijgen:**
+1. Ga naar [supabase.com](https://supabase.com) en log in (of maak een gratis account aan)
+2. Maak een nieuw project aan via **New Project**
+3. Ga naar **Project Settings** (tandwiel links onderaan) → **API**
+4. Kopieer de waarde onder **Project URL**
+
+```
+NEXT_PUBLIC_SUPABASE_URL=https://abcdefghijklmnop.supabase.co
+```
+
+---
+
+### 2. `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+
+**Wat:** De publieke "anonymous" API-sleutel van Supabase. Deze sleutel is veilig om in de browser te gebruiken — hij geeft alleen toegang via de RLS-regels die jij instelt.
+
+**Hoe verkrijgen:**
+1. Zelfde pagina als hierboven: **Project Settings** → **API**
+2. Kopieer de waarde onder **Project API keys** → `anon` `public`
+
+```
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+> De waarde is een lange JWT-string die begint met `eyJ`.
+
+---
+
+### 3. `SUPABASE_SERVICE_ROLE_KEY`
+
+**Wat:** De geheime "service role" sleutel van Supabase. Deze sleutel omzeilt RLS en wordt alleen server-side gebruikt (nooit in de browser). Houd hem geheim.
+
+**Hoe verkrijgen:**
+1. Zelfde pagina: **Project Settings** → **API**
+2. Kopieer de waarde onder **Project API keys** → `service_role` `secret`
+3. Klik op **Reveal** om de waarde zichtbaar te maken
+
+```
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+> Zet deze waarde **nooit** in een publieke repository of client-side code.
+
+---
+
+### 4. `ANTHROPIC_API_KEY`
+
+**Wat:** De API-sleutel voor de Claude API van Anthropic. Hiermee genereert de app het hardloopschema.
+
+**Hoe verkrijgen:**
+1. Ga naar [console.anthropic.com](https://console.anthropic.com) en log in (of maak een account aan)
+2. Ga naar **API Keys** in het linkermenu
+3. Klik op **Create Key**, geef hem een naam (bijv. `hardloopschema`)
+4. Kopieer de sleutel direct — hij wordt maar één keer getoond
+
+```
+ANTHROPIC_API_KEY=sk-ant-api03-...
+```
+
+> De sleutel begint met `sk-ant-`. Je hebt credits nodig; nieuwe accounts krijgen gratis starttegoed.
+
+**Kosten per schema generatie (indicatie):**
+- Claude Sonnet: ±€0,30–0,50
+- Claude Haiku (goedkoper alternatief): ±€0,05–0,10
+
+---
+
+### 5. `GARMIN_SERVICE_URL`
+
+**Wat:** Het adres van de Python FastAPI service die de Garmin Connect integratie verzorgt.
+
+**Lokale ontwikkeling:**
+```
+GARMIN_SERVICE_URL=http://localhost:8000
+```
+
+**Na deployen op Railway:**
+```
+GARMIN_SERVICE_URL=https://garmin-service-production-xxxx.up.railway.app
+```
+
+> Zie de sectie **Deployen** voor hoe je de Railway URL verkrijgt.
+
+---
+
+### 6. `GARMIN_ENCRYPTION_KEY`
+
+**Wat:** Een willekeurige 32-karakter sleutel die gebruikt wordt om Garmin Connect gebruikersnamen en wachtwoorden te versleutelen (AES-256-CBC) voordat ze in de database worden opgeslagen.
+
+**Hoe genereren** (kies één methode):
+
+```bash
+# Methode 1: openssl (aanbevolen)
 openssl rand -hex 16
-# Uitvoer: 4a7f2c9d1e8b3f6a0c5d2e9f4b7a1e3d
+# Voorbeeld uitvoer: 4a7f2c9d1e8b3f6a0c5d2e9f4b7a1e3d
+
+# Methode 2: Python
+python3 -c "import secrets; print(secrets.token_hex(16))"
+
+# Methode 3: /dev/urandom
+cat /dev/urandom | tr -dc 'a-f0-9' | head -c 32
+```
+
+```
+GARMIN_ENCRYPTION_KEY=4a7f2c9d1e8b3f6a0c5d2e9f4b7a1e3d
+```
+
+> Gebruik voor elke installatie een unieke sleutel. Verlies je deze sleutel, dan kunnen de opgeslagen Garmin credentials niet meer worden ontsleuteld en moeten gebruikers opnieuw koppelen.
+
+---
+
+### Volledig ingevuld voorbeeld
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://abcdefghijklmnop.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFiY2QiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTcwMDAwMDAwMCwiZXhwIjoyMDE1MDAwMDAwfQ.voorbeeld
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFiY2QiLCJyb2xlIjoic2VydmljZV9yb2xlIiwiaWF0IjoxNzAwMDAwMDAwLCJleHAiOjIwMTUwMDAwMDB9.voorbeeld
+ANTHROPIC_API_KEY=sk-ant-api03-AbCdEfGhIjKlMnOpQrStUvWxYz1234567890abcdef
+GARMIN_SERVICE_URL=http://localhost:8000
+GARMIN_ENCRYPTION_KEY=4a7f2c9d1e8b3f6a0c5d2e9f4b7a1e3d
 ```
 
 ---
