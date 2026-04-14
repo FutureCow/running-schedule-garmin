@@ -87,12 +87,45 @@ nano .env.local   # vul de waarden in (zie sectie "Omgevingsvariabelen")
 # PostgreSQL installeren (als nog niet aanwezig)
 sudo apt install -y postgresql postgresql-contrib
 
+# Controleer of de service draait
+sudo systemctl start postgresql
+sudo systemctl enable postgresql
+```
+
+**Optie A — gebruik de standaard `postgres` superuser (eenvoudig, lokaal)**
+
+```bash
+# Stel een wachtwoord in voor de postgres gebruiker
+sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'mijnwachtwoord';"
+
 # Database aanmaken
 sudo -u postgres psql -c "CREATE DATABASE hardloopschema;"
 
 # Migratie uitvoeren
-cd running-schedule-app
-psql -U postgres -d hardloopschema -f ../db/migrations/001_initial.sql
+psql -U postgres -d hardloopschema -f db/migrations/001_initial.sql
+```
+
+Gebruik daarna in `.env.local`:
+```
+DATABASE_URL=postgresql://postgres:mijnwachtwoord@localhost:5432/hardloopschema
+```
+
+**Optie B — maak een aparte databasegebruiker aan (aanbevolen)**
+
+```bash
+# Maak gebruiker aan (vervang 'hardloop' en 'mijnwachtwoord')
+sudo -u postgres psql -c "CREATE USER hardloop WITH PASSWORD 'mijnwachtwoord';"
+
+# Maak database aan en geef eigenaarschap
+sudo -u postgres psql -c "CREATE DATABASE hardloopschema OWNER hardloop;"
+
+# Migratie uitvoeren
+psql -U hardloop -d hardloopschema -f db/migrations/001_initial.sql
+```
+
+Gebruik daarna in `.env.local`:
+```
+DATABASE_URL=postgresql://hardloop:mijnwachtwoord@localhost:5432/hardloopschema
 ```
 
 ### 7. Python Garmin service instellen
@@ -188,15 +221,50 @@ vi .env.local   # vul de waarden in
 # PostgreSQL installeren
 apk add postgresql postgresql-contrib
 
+# Initialiseer de database (eerste keer)
+mkdir -p /var/lib/postgresql/data
+chown postgres:postgres /var/lib/postgresql/data
+su postgres -c "initdb -D /var/lib/postgresql/data"
+
 # Service starten
 rc-service postgresql start
+rc-update add postgresql default   # automatisch starten bij boot
+```
+
+**Optie A — gebruik de standaard `postgres` superuser (eenvoudig, lokaal)**
+
+```bash
+# Stel een wachtwoord in voor de postgres gebruiker
+su postgres -c "psql -c \"ALTER USER postgres PASSWORD 'mijnwachtwoord';\""
 
 # Database aanmaken
-psql -U postgres -c "CREATE DATABASE hardloopschema;"
+su postgres -c "psql -c \"CREATE DATABASE hardloopschema;\""
 
 # Migratie uitvoeren
-cd running-schedule-app
-psql -U postgres -d hardloopschema -f ../db/migrations/001_initial.sql
+psql -U postgres -d hardloopschema -f db/migrations/001_initial.sql
+```
+
+Gebruik daarna in `.env.local`:
+```
+DATABASE_URL=postgresql://postgres:mijnwachtwoord@localhost:5432/hardloopschema
+```
+
+**Optie B — maak een aparte databasegebruiker aan (aanbevolen)**
+
+```bash
+# Maak gebruiker aan (vervang 'hardloop' en 'mijnwachtwoord')
+su postgres -c "psql -c \"CREATE USER hardloop WITH PASSWORD 'mijnwachtwoord';\""
+
+# Maak database aan en geef eigenaarschap
+su postgres -c "psql -c \"CREATE DATABASE hardloopschema OWNER hardloop;\""
+
+# Migratie uitvoeren
+psql -U hardloop -d hardloopschema -f db/migrations/001_initial.sql
+```
+
+Gebruik daarna in `.env.local`:
+```
+DATABASE_URL=postgresql://hardloop:mijnwachtwoord@localhost:5432/hardloopschema
 ```
 
 ### 8. Python Garmin service instellen
@@ -255,17 +323,29 @@ cp .env.local.example .env.local
 
 **Formaat:** `postgresql://gebruiker:wachtwoord@host:poort/databasenaam`
 
-**Lokaal aanmaken:**
+**PostgreSQL gebruiker en database aanmaken:**
+
+Kies één van de twee opties hieronder. Zie ook de uitgebreidere stappen in de installatie-instructies voor Debian of Alpine.
+
 ```bash
-# Database aanmaken (als postgres superuser)
-psql -U postgres -c "CREATE DATABASE hardloopschema;"
+# Optie A — standaard postgres superuser
+sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'mijnwachtwoord';"
+sudo -u postgres psql -c "CREATE DATABASE hardloopschema;"
+# → DATABASE_URL=postgresql://postgres:mijnwachtwoord@localhost:5432/hardloopschema
 
-# Of met een eigen gebruiker
-createdb hardloopschema
+# Optie B — aparte gebruiker (aanbevolen)
+sudo -u postgres psql -c "CREATE USER hardloop WITH PASSWORD 'mijnwachtwoord';"
+sudo -u postgres psql -c "CREATE DATABASE hardloopschema OWNER hardloop;"
+# → DATABASE_URL=postgresql://hardloop:mijnwachtwoord@localhost:5432/hardloopschema
+```
+
+Voer daarna de migratie uit:
+```bash
+psql -U <gebruiker> -d hardloopschema -f db/migrations/001_initial.sql
 ```
 
 ```
-DATABASE_URL=postgresql://postgres:mijnwachtwoord@localhost:5432/hardloopschema
+DATABASE_URL=postgresql://hardloop:mijnwachtwoord@localhost:5432/hardloopschema
 ```
 
 ---
