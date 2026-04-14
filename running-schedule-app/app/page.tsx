@@ -1,19 +1,15 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { auth } from '@/lib/auth'
+import sql from '@/lib/db'
 
 export default async function Home() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const session = await auth()
+  if (!session?.user) redirect('/login')
 
-  if (!user) redirect('/login')
+  const profiles = await sql`
+    SELECT user_id FROM profiles WHERE user_id = ${session.user.id}
+  `
 
-  // Check of gebruiker al een profiel heeft
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('user_id')
-    .eq('user_id', user.id)
-    .single()
-
-  if (!profile) redirect('/onboarding')
+  if (profiles.length === 0) redirect('/onboarding')
   redirect('/dashboard')
 }
