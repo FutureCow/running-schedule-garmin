@@ -67,5 +67,10 @@ export default async function DashboardPage() {
   const schedule = await loadSchedule(session.user.id)
   if (!schedule) redirect('/onboarding')
 
-  return <DashboardClient schedule={schedule} />
+  const garminRows = await sql`
+    SELECT user_id FROM garmin_connections WHERE user_id = ${session.user.id}
+  `
+  const garminConnected = garminRows.length > 0
+
+  return <DashboardClient schedule={schedule} garminConnected={garminConnected} />
 }

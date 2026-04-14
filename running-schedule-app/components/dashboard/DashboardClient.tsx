@@ -8,11 +8,12 @@ import { GarminPanel } from './GarminPanel'
 
 interface Props {
   schedule: Schedule
+  garminConnected: boolean
 }
 
-export function DashboardClient({ schedule: initialSchedule }: Props) {
+export function DashboardClient({ schedule: initialSchedule, garminConnected }: Props) {
   const [schedule, setSchedule] = useState(initialSchedule)
-  const [activeWeekNum, setActiveWeekNum] = useState(1)
+  const [activeWeekNum, setActiveWeekNum] = useState(initialSchedule.weeks[0]?.week_number ?? 1)
   const [regenerating, setRegenerating] = useState(false)
 
   async function toggleWorkoutComplete(workoutId: string, voltooid: boolean) {
@@ -107,6 +108,7 @@ export function DashboardClient({ schedule: initialSchedule }: Props) {
               core: wo.core,
               cooldown: wo.cooldown,
             }))}
+            initialConnected={garminConnected}
           />
         </div>
       )}

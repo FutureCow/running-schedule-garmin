@@ -11,16 +11,17 @@ interface Props {
     core: { description: string; distance_km: number; pace_min_km: string }
     cooldown: { description: string; distance_km: number; pace_min_km: string }
   }>
+  initialConnected: boolean
 }
 
-export function GarminPanel({ weekWorkouts }: Props) {
+export function GarminPanel({ weekWorkouts, initialConnected }: Props) {
   const [showConnect, setShowConnect] = useState(false)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [connecting, setConnecting] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [message, setMessage] = useState('')
-  const [isConnected, setIsConnected] = useState(false)
+  const [isConnected, setIsConnected] = useState(initialConnected)
 
   async function connectGarmin() {
     setConnecting(true)
