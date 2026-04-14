@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Schedule, Week, Workout } from '@/lib/types'
 import { WeekNavigation } from '@/components/dashboard/WeekNavigation'
 import { WorkoutCard } from '@/components/dashboard/WorkoutCard'
+import { GarminPanel } from '@/components/dashboard/GarminPanel'
 
 export default function DashboardPage() {
   const [schedule, setSchedule] = useState<Schedule | null>(null)
@@ -162,6 +163,16 @@ export default function DashboardPage() {
               />
             ))}
           </div>
+          <GarminPanel
+            weekWorkouts={activeWeek.workouts.map(wo => ({
+              dag: wo.dag,
+              type: wo.type,
+              distance_km: wo.distance_km,
+              warmup: wo.warmup,
+              core: wo.core,
+              cooldown: wo.cooldown,
+            }))}
+          />
         </div>
       )}
     </div>
