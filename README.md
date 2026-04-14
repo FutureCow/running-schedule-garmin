@@ -460,6 +460,72 @@ vercel --prod
    ```
 3. Zet `GARMIN_SERVICE_URL` in Vercel in op de Railway URL die je ontvangt.
 
+### Python service → Alpine Linux rc-service (zelfhosting)
+
+Hiermee draait de Garmin service automatisch als een achtergrondproces dat ook bij een herstart weer opstart.
+
+**1. Gebruiker aanmaken**
+
+```bash
+adduser -D -H -s /sbin/nologin garmin
+```
+
+**2. Repository neerzetten**
+
+```bash
+# Pas het pad aan als je de repo ergens anders wilt
+git clone https://github.com/FutureCow/running-schedule-garmin.git /opt/running-schedule-garmin
+cd /opt/running-schedule-garmin/garmin-service
+
+# Virtuele omgeving aanmaken en dependencies installeren
+python3 -m venv venv
+source venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
+deactivate
+
+# Eigenaarschap geven aan de garmin gebruiker
+chown -R garmin:garmin /opt/running-schedule-garmin/garmin-service
+```
+
+**3. Init-script installeren**
+
+```bash
+cp /opt/running-schedule-garmin/garmin-service/garmin-service.initd /etc/init.d/garmin-service
+chmod +x /etc/init.d/garmin-service
+```
+
+> Als je de repo op een ander pad hebt staan, pas dan `REPO_DIR` bovenaan `/etc/init.d/garmin-service` aan.
+
+**4. Service starten en inschakelen**
+
+```bash
+rc-service garmin-service start
+rc-update add garmin-service default
+
+# Controleer
+rc-service garmin-service status
+curl http://localhost:8000/health   # → {"status":"ok"}
+```
+
+**5. Logs bekijken**
+
+```bash
+tail -f /var/log/garmin-service/output.log
+tail -f /var/log/garmin-service/error.log
+```
+
+**Handige commando's**
+
+```bash
+rc-service garmin-service start    # starten
+rc-service garmin-service stop     # stoppen
+rc-service garmin-service restart  # herstarten
+rc-service garmin-service status   # status bekijken
+```
+
+---
+
 ### Python service → Docker (zelfhosting)
 
 ```bash
