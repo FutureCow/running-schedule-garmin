@@ -25,4 +25,7 @@ depend() {
 start_pre() {
     mkdir -p "/var/log/${RC_SVCNAME}"
     chown "${command_user}" "/var/log/${RC_SVCNAME}"
+    mkdir -p "${APP_DIR}/tokens"
+    chown "${command_user}" "${APP_DIR}/tokens"
+    chmod 700 "${APP_DIR}/tokens"
 }

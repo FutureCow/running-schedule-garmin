@@ -24,7 +24,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-TOKEN_BASE_DIR = os.path.expanduser("~/.garminconnect")
+TOKEN_BASE_DIR = os.path.join(os.path.dirname(__file__), "tokens")
 
 
 def get_token_dir(username: str) -> str:
