@@ -20,7 +20,7 @@ garmin-service/          # Python FastAPI (Railway)
 | Laag | Technologie |
 |------|-------------|
 | Frontend + API routes | Next.js 16, TypeScript, Tailwind CSS |
-| Database + Auth | Supabase (PostgreSQL + Auth) |
+| Database + Auth | PostgreSQL + NextAuth.js |
 | AI schema generatie | Claude API (claude-sonnet-4-6) |
 | Garmin integratie | Python FastAPI + python-garminconnect |
 
@@ -81,15 +81,18 @@ cp .env.local.example .env.local
 nano .env.local   # vul de waarden in (zie sectie "Omgevingsvariabelen")
 ```
 
-### 6. Supabase database inrichten
-
-1. Maak een gratis account aan op [supabase.com](https://supabase.com)
-2. Maak een nieuw project aan
-3. Ga naar **SQL Editor** en voer de migratie uit:
+### 6. PostgreSQL database inrichten
 
 ```bash
-cat supabase/migrations/001_initial.sql
-# Kopieer de inhoud en plak in Supabase SQL Editor → Run
+# PostgreSQL installeren (als nog niet aanwezig)
+sudo apt install -y postgresql postgresql-contrib
+
+# Database aanmaken
+sudo -u postgres psql -c "CREATE DATABASE hardloopschema;"
+
+# Migratie uitvoeren
+cd running-schedule-app
+psql -U postgres -d hardloopschema -f ../db/migrations/001_initial.sql
 ```
 
 ### 7. Python Garmin service instellen
@@ -179,9 +182,22 @@ cp .env.local.example .env.local
 vi .env.local   # vul de waarden in
 ```
 
-### 7. Supabase database inrichten
+### 7. PostgreSQL database inrichten
 
-Zelfde als bij Debian (zie stap 6 hierboven).
+```bash
+# PostgreSQL installeren
+apk add postgresql postgresql-contrib
+
+# Service starten
+rc-service postgresql start
+
+# Database aanmaken
+psql -U postgres -c "CREATE DATABASE hardloopschema;"
+
+# Migratie uitvoeren
+cd running-schedule-app
+psql -U postgres -d hardloopschema -f ../db/migrations/001_initial.sql
+```
 
 ### 8. Python Garmin service instellen
 
@@ -231,132 +247,106 @@ cd running-schedule-app
 cp .env.local.example .env.local
 ```
 
-Open `.env.local` in een teksteditor en vul de zes waarden in zoals hieronder beschreven.
+---
+
+### 1. `DATABASE_URL`
+
+**Wat:** Verbindingsstring naar jouw PostgreSQL database.
+
+**Formaat:** `postgresql://gebruiker:wachtwoord@host:poort/databasenaam`
+
+**Lokaal aanmaken:**
+```bash
+# Database aanmaken (als postgres superuser)
+psql -U postgres -c "CREATE DATABASE hardloopschema;"
+
+# Of met een eigen gebruiker
+createdb hardloopschema
+```
+
+```
+DATABASE_URL=postgresql://postgres:mijnwachtwoord@localhost:5432/hardloopschema
+```
 
 ---
 
-### 1. `NEXT_PUBLIC_SUPABASE_URL`
+### 2. `NEXTAUTH_SECRET`
 
-**Wat:** De URL van jouw Supabase project. Begint altijd met `https://` en eindigt op `.supabase.co`.
+**Wat:** Willekeurige geheime string waarmee NextAuth.js JWT-tokens ondertekent. Minimaal 32 tekens.
 
-**Hoe verkrijgen:**
-1. Ga naar [supabase.com](https://supabase.com) en log in (of maak een gratis account aan)
-2. Maak een nieuw project aan via **New Project**
-3. Ga naar **Project Settings** (tandwiel links onderaan) → **API**
-4. Kopieer de waarde onder **Project URL**
+**Genereren:**
+```bash
+openssl rand -hex 32
+# Voorbeeld: a3f8c2d1e9b4f7a0c6d3e2f1b9a4c7d0e8f3b2a1c9d4e7f0b3a2c1d9e8f7b4
+```
 
 ```
-NEXT_PUBLIC_SUPABASE_URL=https://abcdefghijklmnop.supabase.co
+NEXTAUTH_SECRET=a3f8c2d1e9b4f7a0c6d3e2f1b9a4c7d0e8f3b2a1c9d4e7f0b3a2c1d9e8f7b4
 ```
+
+> Verlies je deze sleutel, dan worden alle actieve sessies ongeldig.
 
 ---
 
-### 2. `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+### 3. `NEXTAUTH_URL`
 
-**Wat:** De publieke "anonymous" API-sleutel van Supabase. Deze sleutel is veilig om in de browser te gebruiken — hij geeft alleen toegang via de RLS-regels die jij instelt.
-
-**Hoe verkrijgen:**
-1. Zelfde pagina als hierboven: **Project Settings** → **API**
-2. Kopieer de waarde onder **Project API keys** → `anon` `public`
+**Wat:** De publieke URL van de app. NextAuth gebruikt dit voor callbacks.
 
 ```
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+NEXTAUTH_URL=http://localhost:3000         # lokaal
+NEXTAUTH_URL=https://jouwapp.vercel.app    # productie
 ```
-
-> De waarde is een lange JWT-string die begint met `eyJ`.
-
----
-
-### 3. `SUPABASE_SERVICE_ROLE_KEY`
-
-**Wat:** De geheime "service role" sleutel van Supabase. Deze sleutel omzeilt RLS en wordt alleen server-side gebruikt (nooit in de browser). Houd hem geheim.
-
-**Hoe verkrijgen:**
-1. Zelfde pagina: **Project Settings** → **API**
-2. Kopieer de waarde onder **Project API keys** → `service_role` `secret`
-3. Klik op **Reveal** om de waarde zichtbaar te maken
-
-```
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-```
-
-> Zet deze waarde **nooit** in een publieke repository of client-side code.
 
 ---
 
 ### 4. `ANTHROPIC_API_KEY`
 
-**Wat:** De API-sleutel voor de Claude API van Anthropic. Hiermee genereert de app het hardloopschema.
+**Wat:** API-sleutel voor de Claude API.
 
 **Hoe verkrijgen:**
-1. Ga naar [console.anthropic.com](https://console.anthropic.com) en log in (of maak een account aan)
-2. Ga naar **API Keys** in het linkermenu
-3. Klik op **Create Key**, geef hem een naam (bijv. `hardloopschema`)
-4. Kopieer de sleutel direct — hij wordt maar één keer getoond
+1. Ga naar [console.anthropic.com](https://console.anthropic.com)
+2. **API Keys** → **Create Key**
+3. Kopieer de sleutel direct (wordt maar één keer getoond)
 
 ```
 ANTHROPIC_API_KEY=sk-ant-api03-...
 ```
 
-> De sleutel begint met `sk-ant-`. Je hebt credits nodig; nieuwe accounts krijgen gratis starttegoed.
-
-**Kosten per schema generatie (indicatie):**
-- Claude Sonnet: ±€0,30–0,50
-- Claude Haiku (goedkoper alternatief): ±€0,05–0,10
-
 ---
 
 ### 5. `GARMIN_SERVICE_URL`
 
-**Wat:** Het adres van de Python FastAPI service die de Garmin Connect integratie verzorgt.
+**Wat:** Adres van de Python Garmin microservice.
 
-**Lokale ontwikkeling:**
 ```
-GARMIN_SERVICE_URL=http://localhost:8000
+GARMIN_SERVICE_URL=http://localhost:8000   # lokaal
+GARMIN_SERVICE_URL=https://xxx.railway.app # na deployen
 ```
-
-**Na deployen op Railway:**
-```
-GARMIN_SERVICE_URL=https://garmin-service-production-xxxx.up.railway.app
-```
-
-> Zie de sectie **Deployen** voor hoe je de Railway URL verkrijgt.
 
 ---
 
 ### 6. `GARMIN_ENCRYPTION_KEY`
 
-**Wat:** Een willekeurige 32-karakter sleutel die gebruikt wordt om Garmin Connect gebruikersnamen en wachtwoorden te versleutelen (AES-256-CBC) voordat ze in de database worden opgeslagen.
-
-**Hoe genereren** (kies één methode):
+**Wat:** 32-karakter sleutel voor AES-256 versleuteling van Garmin credentials.
 
 ```bash
-# Methode 1: openssl (aanbevolen)
 openssl rand -hex 16
-# Voorbeeld uitvoer: 4a7f2c9d1e8b3f6a0c5d2e9f4b7a1e3d
-
-# Methode 2: Python
-python3 -c "import secrets; print(secrets.token_hex(16))"
-
-# Methode 3: /dev/urandom
-cat /dev/urandom | tr -dc 'a-f0-9' | head -c 32
+# Voorbeeld: 4a7f2c9d1e8b3f6a0c5d2e9f4b7a1e3d
 ```
 
 ```
 GARMIN_ENCRYPTION_KEY=4a7f2c9d1e8b3f6a0c5d2e9f4b7a1e3d
 ```
 
-> Gebruik voor elke installatie een unieke sleutel. Verlies je deze sleutel, dan kunnen de opgeslagen Garmin credentials niet meer worden ontsleuteld en moeten gebruikers opnieuw koppelen.
-
 ---
 
 ### Volledig ingevuld voorbeeld
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=https://abcdefghijklmnop.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFiY2QiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTcwMDAwMDAwMCwiZXhwIjoyMDE1MDAwMDAwfQ.voorbeeld
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFiY2QiLCJyb2xlIjoic2VydmljZV9yb2xlIiwiaWF0IjoxNzAwMDAwMDAwLCJleHAiOjIwMTUwMDAwMDB9.voorbeeld
-ANTHROPIC_API_KEY=sk-ant-api03-AbCdEfGhIjKlMnOpQrStUvWxYz1234567890abcdef
+DATABASE_URL=postgresql://postgres:mijnwachtwoord@localhost:5432/hardloopschema
+NEXTAUTH_SECRET=a3f8c2d1e9b4f7a0c6d3e2f1b9a4c7d0e8f3b2a1c9d4e7f0b3a2c1d9e8f7b4
+NEXTAUTH_URL=http://localhost:3000
+ANTHROPIC_API_KEY=sk-ant-api03-AbCdEfGhIjKlMnOpQrStUvWxYz1234567890
 GARMIN_SERVICE_URL=http://localhost:8000
 GARMIN_ENCRYPTION_KEY=4a7f2c9d1e8b3f6a0c5d2e9f4b7a1e3d
 ```
@@ -430,10 +420,11 @@ running-schedule-garmin/
 │   ├── lib/
 │   │   ├── claude.ts              # Schema generatie prompt
 │   │   ├── types.ts               # Gedeelde TypeScript types
-│   │   └── supabase/              # Supabase clients
-│   └── supabase/
+│   │   ├── db.ts                  # PostgreSQL database client
+│   │   └── auth.ts                # NextAuth.js configuratie
+│   └── db/
 │       └── migrations/
-│           └── 001_initial.sql    # Database schema + RLS
+│           └── 001_initial.sql    # Database schema
 │
 └── garmin-service/                # Python FastAPI service
     ├── main.py                    # API endpoints
@@ -453,13 +444,6 @@ Ja. Je Garmin gebruikersnaam en wachtwoord worden nooit opgeslagen in plaintext.
 
 **Wat als Garmin Connect de API blokkeert?**
 De `python-garminconnect` library maakt gebruik van de informele Garmin API die bij updates kan breken. De app toont een foutmelding als de sync mislukt. Je kunt het schema dan handmatig bekijken in de app.
-
-**Welk Claude model wordt gebruikt?**
-`claude-sonnet-4-6`. Je kunt dit aanpassen in `running-schedule-app/lib/claude.ts` als je een ander model wilt gebruiken (bijv. `claude-haiku-4-5-20251001` voor lagere kosten).
-
-**Kosten van de Claude API per schema generatie?**
-- Claude Sonnet: ±€0,30–0,50 per generatie
-- Claude Haiku: ±€0,05–0,10 per generatie
 
 ---
 
