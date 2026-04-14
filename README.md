@@ -480,6 +480,71 @@ curl http://localhost:8000/health
 
 ---
 
+## Updaten naar een nieuwe versie
+
+### 1. Haal de laatste wijzigingen op
+
+```bash
+cd running-schedule-garmin
+git pull
+```
+
+### 2. Next.js dependencies bijwerken
+
+```bash
+cd running-schedule-app
+npm install
+```
+
+### 3. Controleer of er nieuwe migraties zijn
+
+Vergelijk de migrations map met wat er al in je database zit:
+
+```bash
+ls db/migrations/
+```
+
+Als er een nieuw bestand staat (bijv. `002_...sql`) dat je nog niet hebt uitgevoerd:
+
+```bash
+psql -U <gebruiker> -d hardloopschema -f db/migrations/002_....sql
+```
+
+> Voer migraties altijd op volgorde uit en sla geen versie over.
+
+### 4. Python dependencies bijwerken
+
+```bash
+cd ../garmin-service
+source venv/bin/activate
+pip install -r requirements.txt --upgrade
+```
+
+### 5. App herstarten
+
+**Lokaal:**
+```bash
+# Next.js (Ctrl+C stoppen en opnieuw starten)
+cd running-schedule-app
+npm run dev
+
+# Garmin service
+cd ../garmin-service
+source venv/bin/activate
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+**Productie (Vercel + Railway):**
+```bash
+# Next.js → Vercel deploy automatisch bij git push naar main
+
+# Garmin service → opnieuw deployen op Railway
+cd garmin-service
+railway up
+```
+
+---
+
 ## Projectstructuur
 
 ```
