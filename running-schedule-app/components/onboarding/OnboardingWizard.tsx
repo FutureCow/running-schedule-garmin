@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { UserProfile } from '@/lib/types'
-import { createClient } from '@/lib/supabase/client'
 import { ProgressBar } from './ProgressBar'
 import { Step1Goal } from './steps/Step1Goal'
 import { Step2Tempo } from './steps/Step2Tempo'
@@ -18,10 +17,10 @@ const TOTAL_STEPS = 7
 function isStepValid(step: number, data: Partial<UserProfile>): boolean {
   switch (step) {
     case 1: return !!data.doel && (data.doel !== 'custom' || !!data.doelafstand_km)
-    case 2: return true // optioneel
+    case 2: return true
     case 3: return !!data.leeftijd && !!data.lengte_cm && !!data.gewicht_kg
     case 4: return !!data.langste_afstand_km && !!data.frequentie_per_week && data.jaren_actief !== undefined
-    case 5: return true // optioneel
+    case 5: return true
     case 6: return (data.trainingsdagen?.length ?? 0) > 0 && !!data.dag_lange_loop && !!data.ondergrond
     case 7: return !!(data.einddatum || data.aantal_weken)
     default: return false
@@ -34,7 +33,6 @@ export function OnboardingWizard({ userId }: { userId: string }) {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
-  const supabase = createClient()
 
   function updateProfile(updates: Partial<UserProfile>) {
     setProfile(prev => ({ ...prev, ...updates }))
@@ -44,23 +42,25 @@ export function OnboardingWizard({ userId }: { userId: string }) {
     setSaving(true)
     setError('')
 
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .upsert({ user_id: userId, ...profile })
+    const profileRes = await fetch('/api/profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(profile),
+    })
 
-    if (profileError) {
-      setError('Fout bij opslaan profiel: ' + profileError.message)
+    if (!profileRes.ok) {
+      setError('Fout bij opslaan profiel. Probeer opnieuw.')
       setSaving(false)
       return
     }
 
-    const response = await fetch('/api/generate', {
+    const generateRes = await fetch('/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ profile }),
     })
 
-    if (!response.ok) {
+    if (!generateRes.ok) {
       setError('Fout bij genereren schema. Probeer opnieuw.')
       setSaving(false)
       return
